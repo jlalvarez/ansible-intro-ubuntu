@@ -1,0 +1,15 @@
+# Por defecto /etc/ansible/hosts
+# Podemos usar otro con -i <inventario>
+
+# hosts-dev
+
+[webservers]
+webapp1 ansible_host=3.228.178.191
+webapp2 ansible_host=3.232.218.105
+
+
+[loadbalancer]
+weblb ansible_host=34.235.19.16
+
+[local]
+control ansible_connection=local

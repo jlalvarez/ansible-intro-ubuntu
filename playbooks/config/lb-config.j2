@@ -1,0 +1,14 @@
+ProxyRequests off
+<Proxy balancer://webcluster >
+    BalancerMember http://3.228.178.191
+    BalancerMember http://3.232.218.105
+    ProxySet lbmethod=byrequests
+</Proxy>
+
+# Optional
+<Location /balancer-manager>
+  SetHandler balancer-manager
+</Location>
+
+ProxyPass /balancer-manager !
+ProxyPass / balancer://webcluster/

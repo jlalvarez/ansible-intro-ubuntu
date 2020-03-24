@@ -1,0 +1,6 @@
+# uname.yml
+
+- hosts: webservers
+  tasks:
+  - name: OS type
+    shell: uname
