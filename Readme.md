@@ -86,11 +86,11 @@ $ ansible web* --list-hosts
 ### Recursos
 
 RESOURCES
-[Install the Control Machine](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html#installing-the-control-machine)
-[Working With Dynamic Inventory](https://docs.ansible.com/ansible/latest/user_guide/intro_dynamic_inventory.html)
-[Ansible Inventory File](https://docs.ansible.com/ansible/latest/user_guide/intro_inventory.html)
-[Ansible Configuration Settings](https://docs.ansible.com/ansible/latest/reference_appendices/config.html#ansible-configuration-settings)
-[Working with Patterns](https://docs.ansible.com/ansible/latest/user_guide/intro_patterns.html)
+- [Install the Control Machine](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html#installing-the-control-machine)
+- [Working With Dynamic Inventory](https://docs.ansible.com/ansible/latest/user_guide/intro_dynamic_inventory.html)
+- [Ansible Inventory File](https://docs.ansible.com/ansible/latest/user_guide/intro_inventory.html)
+- [Ansible Configuration Settings](https://docs.ansible.com/ansible/latest/reference_appendices/config.html#ansible-configuration-settings)
+- [Working with Patterns](https://docs.ansible.com/ansible/latest/user_guide/intro_patterns.html)
 
 
 ## Tareas Ansible
@@ -379,3 +379,150 @@ https://docs.ansible.com/ansible/latest/modules/import_playbook_module.html
         command: service httpd status
 ```
 
+## Uso de Variables 
+
+Las variables permiten crear configuraciones más generales que se comncretan con los valores de estas variables.
+
+Para acceder a las variables se utiliza jinja2.
+
+Ansible dispone de una serie de variables (ansible_facts) que se instancia durante la tarea "Gathering Facts". Puedes consultar estas variable, por ejemplo, para el grupo control mediante:
+
+```
+$ ansible -m setup control
+```
+En el siguiente ejemplo, se amplia nuestra App con un nuevo fichero info.php incluyendo el nombre del host:
+
+```
+# setup-app.yml
+
+---
+  - hosts: webservers
+    become: true
+    tasks:
+      - name: Upload application file
+        copy:
+          src: app/index.php
+          dest: /var/www/html
+          mode: 0755
+
+      - name: Incluir info.php a la App
+        copy: 
+          dest: /var/www/html
+          content: "<h1>{{ ansible_hostname }}</h1>"
+      
+      - name: Configure php.ini file
+        lineinfile:
+          path: /etc/php.ini
+          regexp: ^short_open_tag
+          line: 'short_open_tag=On'
+        notify: restart apache
+
+    handlers:
+      - name: restart apache
+        service: name=httpd state=restarted
+```
+
+
+También, podemos crear variables (vars) locales a un Playbook o crear variables en un fichero e importarlo a los Playbooks.
+
+En este primer ejemplo se crea una variable local al Playbook y se utiliza con la sintaxis jinja2:
+
+```
+# playbook.yml
+---
+  vars:
+    path_to_app: "/var/www/html"
+  tasks:
+    - name: incluir info.php a la aplicación
+      copy:
+        dest: "{{path_to_app}}//info.php"
+        content: "<?php phpinfo(); ?>"
+```
+
+Es posible definir variables de tipo diccionario:
+
+```
+foo:
+  field1: one
+  field2: two
+
+# Podemos acceder con:
+foo['field1']
+foo.field1 
+```
+
+También, se pueden crear (register) variables con valores dependientes de la ejecución de tareas. Con el [módulo debug](https://docs.ansible.com/ansible/latest/modules/debug_module.html) podemos ver las variables y depurar los playbooks. El siguiente código muestra un ejemplo:
+
+```
+# playbook.yml
+---
+  vars:
+    path_to_app: "/var/www/html"
+  tasks:
+    - name: Contenido directorio
+      command: ls -la {{path_to_app}}
+      register: contenido
+
+    - name: Mostrar el contenido del directorio
+      debug:
+        msg: "{{contenido}}
+```
+
+## Roles
+https://docs.ansible.com/ansible/latest/user_guide/playbooks_reuse_roles.html
+
+Los roles permiten cargar automáticamente ciertos vars_files, tareas y handlers y este agrupamiento por roles permite compartirlos con otros usuarios.
+
+Partiendo de este estructura:
+
+```
+site.yml
+webservers.yml
+fooservers.yml
+roles/
+    webservers/
+        tasks/
+          - main.yml
+        vars/
+          - main.yml
+        handlers/
+          - main.yml
+    common/
+        tasks/
+        handlers/
+        files/
+        templates/
+        vars/
+        defaults/
+        meta/
+```
+
+Los roles se usarían con:
+
+```
+---
+- hosts: webservers
+  roles:
+    - common
+    - webservers
+```
+El comportamiento para cada rol "x" sería:
+
+- Si existe roles/x/task/main.yml, las tareas incluidas en el main.yml se agregarán al Play.
+- Si existe roles/x/handlers/main.yml, los handlers serán agregados al play.
+- Si existe roles/x/vars/main.yml, se agregarán las variables.
+- Si existe roles/x/defaults/main.yml, se agregarán las variables.
+- Si existe roles/x/meta/main.yml, se agregarán las dependencias de roles.
+- Cualquier copia, script, plantilla o tareas incluidas (en el rol) pueden hacer referencia a archivos incluidos es roles/x/{archivos, plantillas, tareas}/.
+
+### Comando Ansible Galaxy 
+
+Ansible Galaxy es un sitio gratuito para buscar, descargar, calificar y revisar todo tipo de roles de Ansible desarrollados por la comunidad y puede ser una excelente manera de comenzar sus proyectos de automatización.
+
+El comando ansible-galaxy está incluido en Ansible. El cliente Galaxy le permite descargar roles de Ansible Galaxy, y también proporciona un excelente marco predeterminado para crear sus propios roles.
+
+Podemos crear un rol con:
+
+```
+$ ansible-galaxy roles/webservers init
+```
