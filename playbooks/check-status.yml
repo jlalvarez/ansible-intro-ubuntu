@@ -4,8 +4,6 @@
     become: true
     tasks:
       - name: Check status of apache
-        #command: service httpd status
-        #service: name=httpd
         shell: 
-          cmd: service httpd status
+          cmd: service apache2 status
           warn: False

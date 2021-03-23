@@ -5,18 +5,18 @@
     become: true
     tasks:
       - name: Installing apache
-        yum: name=httpd state=present
+        apt: name=apache2 update_cache=yes state=latest
       - name: Ensure apache starts
-        service: name=httpd state=started enabled=yes
+        service: name=apache2 state=started enabled=yes
 
   - hosts: webservers
     become: true
     tasks:
       - name: Installing services
-        yum:
+        apt:
           name: 
-            - httpd
+            - apache2
             - php
           state: present
       - name: Ensure apache starts
-        service: name=httpd state=started enabled=yes
+        service: name=apache2 state=started enabled=yes

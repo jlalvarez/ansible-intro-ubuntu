@@ -29,12 +29,12 @@
       
       - name: Configure php.ini file
         lineinfile:
-          path: /etc/php.ini
+          path: /etc/php/7.2/apache2/php.ini
           regexp: ^short_open_tag
           line: 'short_open_tag=On'
         notify: restart apache
 
     handlers:
       - name: restart apache
-        service: name=httpd state=restarted
+        service: name=apache2 state=restarted
         

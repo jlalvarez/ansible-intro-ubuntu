@@ -1,0 +1,8 @@
+# apt-update.yml
+
+---
+  - hosts: webservers:loadbalancer
+    become: true
+    tasks:
+      - name: Updating APT packages
+        apt: update_cache=yes

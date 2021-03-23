@@ -3,17 +3,27 @@
   - hosts: loadbalancer
     become: true
     tasks:
+      - name: Enable Modules
+      # $ sudo a2enmod proxy
+      # $ sudo a2enmod proxy_http
+      # $ sudo a2enmod proxy_balancer
+      # $ sudo a2enmod lbmethod_byrequests
+      # $ sudo a2enmod headers
+        shell: 
+          cmd: a2enmod proxy proxy_http proxy_balancer lbmethod_byrequests headers
       - name: Creating template
         template:
           src: config/lb-config.j2
-          dest:  /etc/httpd/conf.d/lb.conf
-          owner: bin
-          group: wheel
-          mode: 064
-        notify: restart httpd
+          dest:  /etc/apache2/conf-available/lb.conf
+          #mode: 064
+      - name: Enable lb configuration
+      # $ sudo a2enmod proxy
+        shell: 
+          cmd: a2enconf lb          
+        notify: restart apache2
     
     handlers:
-      - name: restart httpd
+      - name: restart apache2
         service:
-          name: httpd
+          name: apache2
           state: restarted
